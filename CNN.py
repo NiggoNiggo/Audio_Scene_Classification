@@ -4,6 +4,7 @@ from torch import optim
 import matplotlib.pyplot as plt
 #build model
 
+
 class CNN(nn.Module):
     def __init__(self,hidden_layer_1,hidden_layer_2,num_classes):
         super().__init__()

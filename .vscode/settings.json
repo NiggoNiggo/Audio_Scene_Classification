@@ -1,0 +1,6 @@
+{
+    "editor.suggest.localityBonus": true,
+    "editor.suggest.showStatusBar": true,
+    "editor.suggest.snippetsPreventQuickSuggestions": true,
+    "files.autoGuessEncoding": true
+}

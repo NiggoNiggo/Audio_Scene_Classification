@@ -45,8 +45,8 @@ if __name__ == '__main__':
     
     
     #------train variables
-    epochs = 6
-    lr = 0.01 #0.0001
+    epochs = 10
+    lr = 0.001 #0.0001
     #early stopping oder lr regulazion machne
     
     #------metrics
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     #----------init Network
     network = CNN(hidden_layer_1=hidden_layer_1,hidden_layer_2=hidden_layer_2,num_classes=num_classes).to(device)
     #load a pretrained model
-    network.load_state_dict(torch.load(r"Models\model_epoch_5_acc0.82_batchsize_32_lr_0.01_fine_tuning.pkl"))
+    network.load_state_dict(torch.load(r"Models\model_new_2s_epoch_10_acc_0.90.pkl"))
     #loss function
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(network.parameters(),lr)#mal den Adam etwas genauer und wissenschaftlier anscchauen
@@ -70,8 +70,9 @@ if __name__ == '__main__':
         if epoch % 1 == 0:
             print(f"Epoch: {epoch}, train_acc: {train_acc:.2f}, test_acc: {test_acc:.2f}, train_loss: {train_loss:.5f}, test_loss: {test_loss:.5f}")
         if epoch % 5 == 0:
-            filename = f"Models/model_epoch_{epoch}_acc{test_acc:.2f}_batchsize_{batch_size}_lr_{lr}_fine_tuning.pkl"
-            filename = f"Models/model_latest_test_acc_{test_acc:.2f}_train_acc_{train_acc:.2f}.pkl"
+            # filename = f"Models/model_epoch_{epoch}_acc{test_acc:.2f}_batchsize_{batch_size}_lr_{lr}_fine_tuning.pkl"
+            # filename = f"Models/model_latest_test_acc_{test_acc:.2f}_train_acc_{train_acc:.2f}.pkl"
+            filename = f"Models/model_new_2s_epoch_{epoch}_acc_{test_acc:.2f}.pkl"
             torch.save(network.state_dict(),filename)
     
     #eval model

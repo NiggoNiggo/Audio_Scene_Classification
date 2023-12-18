@@ -52,7 +52,7 @@ class SoundDataSet(Dataset):
         self.n_mels = 128 #amount of mel bands fives the hight of spectrogramm
         self.n_fft = 4096 #fft length block processing
         self.hop_length = self.n_fft//2 #influnce the width of spectrogramm
-        self.duration = 10 #duration tim ein seconds
+        self.duration = 2 #duration tim ein seconds
         
     def __len__(self):
         return len(self.data)
