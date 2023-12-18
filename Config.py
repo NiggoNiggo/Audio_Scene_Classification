@@ -57,7 +57,7 @@ if __name__ == '__main__':
     #----------init Network
     network = CNN(hidden_layer_1=hidden_layer_1,hidden_layer_2=hidden_layer_2,num_classes=num_classes).to(device)
     #load a pretrained model
-    network.load_state_dict(torch.load(r"Models\model_new_2s_epoch_10_acc_0.90.pkl"))
+    network.load_state_dict(torch.load(r"Models\model_new_2s_epoch_5_acc_0.98.pkl"))
     #loss function
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(network.parameters(),lr)#mal den Adam etwas genauer und wissenschaftlier anscchauen
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     
     end_time = time.time()
     last_time = end_time - start_time
-    print(f"The program took: {last_time/60} min")
+    print(f"The program took: {round(last_time/60,2)} min")
     
     
     ###
