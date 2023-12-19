@@ -38,14 +38,14 @@ if __name__ == '__main__':
     train_set = SoundDataSet(X_train,y_train,lim=lim)
     val_set = SoundDataSet(X_val,y_val,lim=lim)
     test_set = SoundDataSet(X_test,y_test,lim=lim)
-    train_loader = DataLoader(train_set,batch_size,num_workers=num_workers)    
-    test_loader = DataLoader(test_set,num_workers=num_workers)
-    val_loader = DataLoader(val_set,batch_size,num_workers=num_workers)
+    train_loader = DataLoader(train_set,batch_size,num_workers=num_workers,shuffle=True)    
+    test_loader = DataLoader(test_set,num_workers=num_workers,shuffle=True)
+    val_loader = DataLoader(val_set,batch_size,num_workers=num_workers,shuffle=True) #shuffle ist neu mal schauen was das macht
     
     
     
     #------train variables
-    epochs = 10
+    epochs = 1
     lr = 0.001 #0.0001
     #early stopping oder lr regulazion machne
     
