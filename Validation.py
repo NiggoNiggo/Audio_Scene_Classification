@@ -11,6 +11,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os 
 
+
+
+
+
+#0 = cafe, 1 = Music, 2 = Street
+
 def load_test_data(path):
     classes = os.listdir(path)
     test_data = pd.DataFrame(columns=["filename", "label"])
@@ -23,8 +29,8 @@ def load_test_data(path):
     test_data.to_csv('validation_data.csv', index=False)
 
 if __name__ == "__main__":
-
-    load_test_data(r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Data\Test_data")
+    test_path = r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Data\Test_data"
+    load_test_data(test_path)
 
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -32,6 +38,12 @@ if __name__ == "__main__":
     hidden_layer_1 = 32
     hidden_layer_2 = 48 
     classes, num_classes = get_classes(all_data)
+    print(classes)
+    len_cafe = len(os.listdir(os.path.join(test_path,"cafe")))
+    len_music = len(os.listdir(os.path.join(test_path,"music")))
+    len_street = len(os.listdir(os.path.join(test_path,"street")))
+    print(len_cafe,len_music,len_street)
+    
 
     network = CNN(hidden_layer_1=hidden_layer_1,hidden_layer_2=hidden_layer_2,num_classes=15).to(device)
     # load a pretrained model
@@ -45,6 +57,10 @@ if __name__ == "__main__":
     batchsize = len(all_data)
     print(batchsize)
 
+    pred_class1 = []
+    pred_class2 = []
+    pred_class3 = []
+    
     with torch.inference_mode():
         network.eval()
         preds = []
@@ -53,12 +69,28 @@ if __name__ == "__main__":
             data, label = data.to(device), label.to(device)
             y_pred = network(data)
             pred = torch.softmax(y_pred,dim=1).argmax(dim=1)
+            if pred.item() in [2,6,7,10,8,9] and label == 0:
+                pred_class1.append(pred)
+            elif pred.item() == 16:
+                pred_class2.append(pred)
+            elif pred.item() in [0,1,3,4,5,11,12,13,14] and label == 2:
+                pred_class3.append(pred)
+
+            #contained labels with the rigth order:
+            
+#             ['beach' 'bus' 'cafe/restaurant' 'car' 'city_center' 'forest_path'
+#               'grocery_store' 'home' 'library' 'metro_station' 'office' 'park'
+#               'residential_area' 'train' 'tram']
+            
             preds.append(pred)
             labels.append(label)
-        acc = Accuracy(torch.tensor(labels).to(device),torch.tensor(preds).to(device))
-        print(acc)
         con_mat(torch.tensor(preds).to(device),torch.tensor(labels).to(device))
         con_mat.plot()
         plt.show()
-            # label encoden und dann abfragen if die gleich
-            
+    
+    all_correct = len(pred_class3)+len(pred_class1)
+    acc = round(all_correct/batchsize,2)*100
+    print(f"len_cafe:{len_cafe}, len_cafe_pred:{len(pred_class1)},lwn_street:{len_street}, len_street_pred: {len(pred_class3)}")
+    len_cafe = len(pred_class1)/len_cafe#cafe
+    len_street = len(pred_class3)/len_street#street
+    print(f"acc class cafe: {round(len_cafe,2)*100}, acc class street: {round(len_street,2)*100}\noverall acc: {acc}")

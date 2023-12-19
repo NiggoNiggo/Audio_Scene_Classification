@@ -123,6 +123,8 @@ if __name__ == "__main__":
     encoder = LabelEncoder()
     label_encoded = encoder.fit_transform(all_data["label"])
     all_data["label"] = label_encoded
+    print(encoder.classes_)
+    
     
     
     #write it to a own file to have all files and labels in one file

@@ -29,8 +29,8 @@ if __name__ == '__main__':
     
     #-------Model variables
     hidden_layer_1 = 32
-    hidden_layer_2 = 48 #64
-    batch_size = 32 #batch size änderung test #8
+    hidden_layer_2 = 48 
+    batch_size = 32 
     num_workers = 12 #change this to your systems availible kernels
     
     #-----------Dataloader
@@ -47,7 +47,6 @@ if __name__ == '__main__':
     #------train variables
     epochs = 1
     lr = 0.001 #0.0001
-    #early stopping oder lr regulazion machne
     
     #------metrics
     accuracy = Accuracy(task="multiclass",num_classes=num_classes).to(device)
