@@ -12,7 +12,7 @@ data_path = r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Data"
 info_segmented = r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Data\segmented_audio.csv" #just segmented audio
 info_audio_1 = r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Data\meta.txt"
 info_audio_2 = r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Data\meta1.txt"
-
+music_path = r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Data\music"
 #type in here above your paths
 
 
@@ -43,7 +43,7 @@ def get_classes(df):
 
 
 class SoundDataSet(Dataset):
-    def __init__(self,data,label,lim=100):
+    def __init__(self,data,label,lim=100,mode="train"):
         super().__init__()
         # self.data = data #contains file name
         self.data = data[:lim]
@@ -53,10 +53,12 @@ class SoundDataSet(Dataset):
         self.n_fft = 4096 #fft length block processing
         self.hop_length = self.n_fft//2 #influnce the width of spectrogramm
         self.duration = 2 #duration tim ein seconds
+        self.mode = mode #just to idetify if the samples in the data or at the beginning will be choiced
         
     def __len__(self):
         return len(self.data)
     
+    #mal schauen, weil fully conected layer, kann das trainning mit 5s schnipsel und val mir2 s schnipsel gemacht werdn?
     
     #das hier auf torchaudio umbasteln
     def __getitem__(self, index):
@@ -66,7 +68,13 @@ class SoundDataSet(Dataset):
         if fs != self.fs:
             data = librosa.resample(y=data,orig_sr=fs,target_sr=self.fs)
         #limit the length of the signal
-        data = librosa.util.fix_length(data=data,size=self.fs*self.duration)
+        # data = librosa.util.fix_length(data=data,size=self.fs*self.duration) 
+        if self.mode == "train":
+            # data = data[self.duration*self.fs:(self.duration+1)*self.fs] #hoffnung, das vlt weiter drin im file besser unterschieden wernden kann
+            # data = data[:(self.duration+3)*self.fs]
+            data = librosa.util.fix_length(data=data,size=10*self.fs)#einmal ausführen lassej und schauen wie sich das auswirkt
+        else:
+            data = data[:self.duration*self.fs]
         #calculate stft
         S = np.abs(librosa.stft(y=data,n_fft=self.n_fft,hop_length=self.hop_length))**2
         #calculate spectrogramm
@@ -74,9 +82,9 @@ class SoundDataSet(Dataset):
         #makes a spectrogramm
         db_spec = librosa.power_to_db(np.abs(spec),ref=np.max)
         #normalze spectrum
-        mean = np.mean(db_spec)
-        std = np.std(db_spec)
-        db_spec = (db_spec - mean) / std
+        # mean = np.mean(db_spec)
+        # std = np.std(db_spec)
+        # db_spec = (db_spec - mean) / std
         
         #fit spectrogramm for CNN
         spec_tensor = torch.tensor(db_spec).type(torch.float).unsqueeze(dim=0)
@@ -116,11 +124,21 @@ if __name__ == "__main__":
     df_segmented["filename"] = df_segmented["filename"].str.replace("/","\\")
     df_segmented["filename"] = os.path.join(data_path,"segmented_audio") + "\\" + df_segmented["filename"].astype(str)
 
+
+    def get_music_in_csv():
+        df = pd.DataFrame()
+        all_files = librosa.util.find_files(music_path,ext="wav")
+        name = ["music" for file in all_files]
+        df["filename"] = all_files
+        df["label"] = name
+        return df
+    music_df = get_music_in_csv()
+
     #concat Dataframes
-    all_data = pd.concat([df_audio,df_audio1,df_segmented],axis=0)
+    all_data = pd.concat([df_audio,df_audio1,df_segmented,music_df],axis=0)
     
     #-----------encode Labels
-    encoder = LabelEncoder()
+    encoder = LabelEncoder() #das hier clt als funktion machen?
     label_encoded = encoder.fit_transform(all_data["label"])
     all_data["label"] = label_encoded
     print(encoder.classes_)

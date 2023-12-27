@@ -35,9 +35,9 @@ if __name__ == '__main__':
     
     #-----------Dataloader
     lim = None #none bedeutet alle elemente /set to a number for faster computation
-    train_set = SoundDataSet(X_train,y_train,lim=lim)
-    val_set = SoundDataSet(X_val,y_val,lim=lim)
-    test_set = SoundDataSet(X_test,y_test,lim=lim)
+    train_set = SoundDataSet(X_train,y_train,lim=lim,mode="train")
+    val_set = SoundDataSet(X_val,y_val,lim=lim,mode="train")
+    test_set = SoundDataSet(X_test,y_test,lim=lim,mode="train")
     train_loader = DataLoader(train_set,batch_size,num_workers=num_workers,shuffle=True)    
     test_loader = DataLoader(test_set,num_workers=num_workers,shuffle=True)
     val_loader = DataLoader(val_set,batch_size,num_workers=num_workers,shuffle=True) #shuffle ist neu mal schauen was das macht
@@ -45,8 +45,8 @@ if __name__ == '__main__':
     
     
     #------train variables
-    epochs = 1
-    lr = 0.001 #0.0001
+    epochs = 11
+    lr = 0.0001 #0.0001
     
     #------metrics
     accuracy = Accuracy(task="multiclass",num_classes=num_classes).to(device)
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     #----------init Network
     network = CNN(hidden_layer_1=hidden_layer_1,hidden_layer_2=hidden_layer_2,num_classes=num_classes).to(device)
     #load a pretrained model
-    network.load_state_dict(torch.load(r"Models\model_new_2s_epoch_5_acc_0.98.pkl"))
+    # network.load_state_dict(torch.load(r"Models\model_new_2s_epoch_20_acc_0.94.pkl"))
     #loss function
     loss_fn = nn.CrossEntropyLoss()
     optimizer = optim.Adam(network.parameters(),lr)#mal den Adam etwas genauer und wissenschaftlier anscchauen
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         if epoch % 5 == 0:
             # filename = f"Models/model_epoch_{epoch}_acc{test_acc:.2f}_batchsize_{batch_size}_lr_{lr}_fine_tuning.pkl"
             # filename = f"Models/model_latest_test_acc_{test_acc:.2f}_train_acc_{train_acc:.2f}.pkl"
-            filename = f"Models/model_new_2s_epoch_{epoch}_acc_{test_acc:.2f}.pkl"
+            filename = f"Models/test_new_length_{epoch}_acc_{test_acc:.2f}.pkl"
             torch.save(network.state_dict(),filename)
     
     #eval model
@@ -83,5 +83,6 @@ if __name__ == '__main__':
     print(f"The program took: {round(last_time/60,2)} min")
     
     
-    ###
+    ###mal noch schauen mit dem label encider ob das probleme macht? also
+    #vlt daseher im main skript ausführem?
  
