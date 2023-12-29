@@ -14,6 +14,9 @@ import os
 
 
 
+#cafe und train die beiden augmentet classed kacken wieder richtig rein aber diesmal weredn beide eher nut train vertauscht.
+#vlt andere augmemtation strategy testen weniger rauschen, weil das ist im hintergrund eh schon enthalten und 
+#mehr pitch shift oder solche Sachen machen.
 
 
 #0 = cafe, 1 = Music, 2 = Street
@@ -47,15 +50,14 @@ if __name__ == "__main__":
 
     network = CNN(hidden_layer_1=hidden_layer_1,hidden_layer_2=hidden_layer_2,num_classes=16).to(device)
     # load a pretrained model
-    network.load_state_dict(torch.load(r"Models\test_new_length_10_acc_0.93.pkl"))
+    network.load_state_dict(torch.load(r"Models\test_new_length_5_acc_0.98.pkl"))
     accuracy = Accuracy(task="multiclass",num_classes=16).to(device)
     con_mat = ConfusionMatrix(task="multiclass",num_classes=16).to(device)
 
 
     val_dataset = SoundDataSet(all_data["filename"],all_data["label"],None,mode="val")
     val_loader = DataLoader(val_dataset,shuffle=True,num_workers=6)
-    batchsize = len(all_data) #hier noch andere Zahlen ausporbieren
-
+    batchsize = len(all_data)
     pred_class1 = []
     pred_class2 = []
     pred_class3 = []

@@ -32,24 +32,28 @@ class Kompressor:
         
     def apply_compressor(self,data,threshold,ratio):
         rms = np.sqrt(data**2)
-        dbfs = 20 * np.log10(rms.mean())
-        gain_factor = 10 ** ((dbfs+ratio*dbfs - dbfs) / 20)
-        #verstärkung
-        gain = np.where(np.abs(rms) > threshold,gain_factor, 1.0)
-        output_signal = data * gain
+        dbfs = 20 * np.log10(rms)
+        mean_dbfs = 20 * np.log10(rms)
+        # plt.plot(dbfs)       
+        # plt.show()
+        # gain_factor = ratio*10**(mean_dbfs/(20))
+        gain_factor = 10**(mean_dbfs/(20*ratio))
+        dbfs = np.where(dbfs<threshold,data,data*gain_factor)
+        return np.clip(dbfs,-1,1)
         
         
-        #muss threshold vlt als Pegel angegeben werden und dann immer alles mit Pegeln gemahcr werden
         
-        return output_signal
+        
+        
+        
     
     def apply_expander(self,data,threshold,ratio):
         rms = np.sqrt(data**2)
-        gain = np.where(np.abs(rms) < threshold, ratio, 1.0)
+        gain = np.where(np.abs(rms) > threshold, ratio, 1.0)
 
         # Anwenden der Verstärkung
         output_signal = data * gain
-        return output_signal
+        return np.clip(output_signal,-1,1)
     
     
     
@@ -75,6 +79,8 @@ class Kompressor:
             X_block = fft.fft(current_block, N)
             #apply window
             Y_block = fft.ifft(X_block * H)
+            Y_block = self.apply_compressor(Y_block,-50,2)
+            # Y_block = self.filterbank(Y_block)
             # self.filterbank(Y_block)
             #hier soll dann mit getatr was ausgeführt werden
             #add data on zero vector on the right position
@@ -109,15 +115,6 @@ class Kompressor:
         return pegel
         
         
-    #liiter als property implementieren        
-    def apply_limiter(self,data:np.ndarray)->np.ndarray:
-        #kann der auch irgendwie als property arbeiten?
-        
-        rms = np.sqrt(data**2)#calc rms
-        #limiter: das vlt doch nicht richtgig
-        rms = np.where(rms>threshold,rms,threshold)
-        return rms 
-    
 
     
     def apply_gain(self,data,pegel):
@@ -128,14 +125,7 @@ class Kompressor:
         amplified_signal = data * gain_factor
         return amplified_signal
     
-    def makeup_gain(self,data,threshold,ratio):
-        gain = (1-1/ratio)
-        data = np.where(np.abs(data)>threshold,data,data*gain)
-        
-        #calc pegel apply gain und dann wider zurück rechnen
-        
-        return data
-
+    
 
 
 
@@ -147,27 +137,32 @@ class Kompressor:
 
 
 if __name__ == "__main__":
-    path = r"bass_T-20_R2_Mg6_sK5_Ar1.00047_Rr0.99969.wav"
+    path = r"C:\Users\analf\Desktop\Studium\5_Semester\Audiotechnik\bass_T-20_R2_Mg6_sK5_Ar1.00047_Rr0.99969.wav"
     #read data
     data, fs = librosa.load(path)
     speaker = sc.default_speaker()
-    threshold_kompressor = 0.9
+    threshold_kompressor = 0.5
     threshold_expander = 0.1
     ratio_kompressor = 0.2
     ratio_expander = 3
 
 
-    kompressor = Kompressor(threshold_kompressor,threshold_expander,0.5)
+    kompressor = Kompressor(threshold_kompressor,threshold_expander,0.5,9,path)
     #vlt wenn das beim klassenaufruf argumente nimmt, dann nicht nochmal in den Methoden
     #alles bei klassenaufruf definieren, und auch sachen berechen wie zum Beispiel den RMS
 
     #trotzdem mal hier kompressor und expander hinbekommen!
 
+    # new_data = kompressor.apply_compressor(data,-10,4)
+    new_data = kompressor.block_processing(data)
+    
+    speaker.play(new_data[:3*fs],fs)
     speaker.play(data[:3*fs],fs)
 
 
-    plt.plot(data)
-
+    plt.plot(data,linestyle="--",label="alt")
+    plt.plot(new_data,linestyle=":",label="neu")
+    plt.legend()
     plt.show()
 
 

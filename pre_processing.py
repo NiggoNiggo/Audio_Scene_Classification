@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset
 from sklearn.preprocessing import LabelEncoder
 import torch, librosa, os
+from audiomentations import Compose, AddGaussianNoise, TimeStretch, PitchShift, Shift
 
 #---------paths: 
 #path to the csv file with all the label and filename information
@@ -17,6 +18,8 @@ music_path = r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Data\music"
 
 
 #-----------global variables
+
+    
 
 
 
@@ -40,7 +43,102 @@ def get_classes(df):
     num_classes = len(classes)
     return classes, num_classes
 
+def get_music_in_csv():
+    df = pd.DataFrame()
+    all_files = librosa.util.find_files(music_path,ext="wav")
+    name = ["music" for file in all_files]
+    df["filename"] = all_files
+    df["label"] = name
+    return df
 
+def make_csv(path,idx):
+    with open(path,"r") as f:
+        data = f.readlines()
+        filename = []
+        label = []
+        for line in range(len(data)):
+            data[line] = data[line].strip().split()
+            if idx == 1:
+                # path = r"C:\Users\analf\Desktop\Studium\Learn_NN\Audioscene_Classifier\Data\audio1"
+                path = os.path.join(data_path,"audio1")
+            else:
+                # path = r"C:\Users\analf\Desktop\Studium\Learn_NN\Audioscene_Classifier\Data\audio"
+                path = os.path.join(data_path,"audio")
+            path = f"{path}\{data[line][0]}".replace("/","\\")
+            filename.append(path)
+            label.append(data[line][1])
+        return pd.DataFrame({"filename":filename,"label":label})
+
+def augment_music(): #noch ander Klassen augmentiren bzw einfach alles?
+    augment = Compose([
+        AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=0.5),
+        TimeStretch(min_rate=0.8, max_rate=1.25, p=0.5),
+        PitchShift(min_semitones=-4, max_semitones=4, p=0.5),
+        Shift(p=0.5),
+        ])
+
+    all_files = librosa.util.find_files(music_path,ext="wav")
+    for file in all_files:
+        data, fs = librosa.load(file)
+        new_data = augment(samples=data,sample_rate=fs)
+        name = file.split("\\")[-1]
+        filename = f"{name}_augmentet.wav"
+        path = os.path.join(music_path,filename)
+        sf.write(path,data,fs)
+
+def augment(data,fs):
+    augment = Compose([
+        AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=0.5),
+        TimeStretch(min_rate=0.8, max_rate=1.25, p=0.5),
+        PitchShift(min_semitones=-4, max_semitones=4, p=0.5),
+        Shift(p=0.5),
+        ])
+    return augment(data,fs)
+
+def augment_data(all_data):
+    #data that neet to be augmentet 2 and 14 cafe,train
+    classes = ["cafe","train"]
+    transformed_labels = [2,14]
+    new_df = pd.DataFrame()
+    for label in transformed_labels:
+        filenames = []
+        labels = []
+        label_data = all_data.loc[all_data["label"] == label]
+        print(pd.unique(label_data["label"]),pd.value_counts(label_data["label"]))
+        df = pd.DataFrame()
+        for file in label_data["filename"]:
+            data, fs = librosa.load(file)
+            new_file = augment(data,fs)
+            name = file.split("\\")[-1].replace(".wav","")
+            vorder_path = "\\".join(file.split("\\")[:-1])
+            filename = f"{name}_augmentet.wav"            
+            path = os.path.join(vorder_path,filename)
+            filenames.append(path)
+            labels.append(label)
+            sf.write(path,new_file,fs)
+        df = pd.DataFrame({"filename":filenames,"label":labels})
+        new_df = pd.concat([new_df,df],axis=0)
+        print(f"new df shape: {new_df.shape}, df shpae: {df.shape}")
+    return new_df
+            
+            
+            
+def observe_fs(df):
+    fs_list = []
+    for x in range(len(df)):
+        filename = df["filename"].iloc[x]
+        fs = sf.info(filename).samplerate
+        fs_list.append(fs)
+    print(np.unique(np.array(fs_list))) #all have the same samplefrequenz
+
+def observe_length(df):
+    duration_list = []
+    for x in range(len(df)):
+        filename = df["filename"].iloc[x]
+        time = sf.info(filename).duration
+        duration_list.append(time)
+    duration = pd.DataFrame({"duration":duration_list})
+    return duration
 
 class SoundDataSet(Dataset):
     def __init__(self,data,label,lim=100,mode="train"):
@@ -93,25 +191,18 @@ class SoundDataSet(Dataset):
         # print(f"shape tensor in dataset: {spec_tensor.shape}")
         return spec_tensor, label
 
+def cut_length_an_split(data:pd.DataFrame):
+    #round data
+    data["duration"] = data["duration"].apply(lambda x: round(x))
+    #acess 30s files
+    #split in 6 files a 5s with new name and safe dem 
+    #acess 10s files split in 5s file 1 2files and safe dem too
+    
+    
+    print(data.duration.unique())
+
 if __name__ == "__main__":    
-    #-----make a csv from the txt files
-    def make_csv(path,idx):
-        with open(path,"r") as f:
-            data = f.readlines()
-            filename = []
-            label = []
-            for line in range(len(data)):
-                data[line] = data[line].strip().split()
-                if idx == 1:
-                    # path = r"C:\Users\analf\Desktop\Studium\Learn_NN\Audioscene_Classifier\Data\audio1"
-                    path = os.path.join(data_path,"audio1")
-                else:
-                    # path = r"C:\Users\analf\Desktop\Studium\Learn_NN\Audioscene_Classifier\Data\audio"
-                    path = os.path.join(data_path,"audio")
-                path = f"{path}\{data[line][0]}".replace("/","\\")
-                filename.append(path)
-                label.append(data[line][1])
-            return pd.DataFrame({"filename":filename,"label":label})
+    
 
     #create dataframes to copy data inside
     all_data = pd.DataFrame()
@@ -125,23 +216,26 @@ if __name__ == "__main__":
     df_segmented["filename"] = os.path.join(data_path,"segmented_audio") + "\\" + df_segmented["filename"].astype(str)
 
 
-    def get_music_in_csv():
-        df = pd.DataFrame()
-        all_files = librosa.util.find_files(music_path,ext="wav")
-        name = ["music" for file in all_files]
-        df["filename"] = all_files
-        df["label"] = name
-        return df
+    # augment_music()
     music_df = get_music_in_csv()
+    
+
+    
+
 
     #concat Dataframes
     all_data = pd.concat([df_audio,df_audio1,df_segmented,music_df],axis=0)
-    
     #-----------encode Labels
     encoder = LabelEncoder() #das hier clt als funktion machen?
     label_encoded = encoder.fit_transform(all_data["label"])
     all_data["label"] = label_encoded
     print(encoder.classes_)
+    # augmentet = augment_data(all_data)
+    # print(augmentet.head(),augmentet.tail())
+    # print(all_data.shape,augmentet.shape, "these are shapes")
+    # print(augmentet["label"].value_counts(), "value counts")
+    # print(augmentet["label"].iloc[1],augmentet["label"].iloc[-1], "ransom values")
+    # all_data = pd.concat([all_data,augmentet],axis=0)
     
     
     
@@ -162,43 +256,11 @@ if __name__ == "__main__":
     #plt.show()
     #All classes are equal 625 samples
 
-
-    #watch the sampling rates of all files
-    def observe_fs(df):
-        fs_list = []
-        for x in range(len(df)):
-            filename = df["filename"].iloc[x]
-            fs = sf.info(filename).samplerate
-            fs_list.append(fs)
-        print(np.unique(np.array(fs_list))) #all have the same samplefrequenz
-
     observe_fs(all_data)
-
-
-    def observe_length(df):
-        duration_list = []
-        for x in range(len(df)):
-            filename = df["filename"].iloc[x]
-            time = sf.info(filename).duration
-            duration_list.append(time)
-        duration = pd.DataFrame({"duration":duration_list})
-        return duration
     #add a duration line in all data for further processing
     duration = observe_length(all_data)
     
     all_data["duration"] = duration
     print(all_data["duration"].unique())
     
-    #nochmal schauen, dass alles auf 5s länge geschnitten wird und die Überflüßigen dann evtl
-    #als weitere datein gespeichert werden!
-    def cut_length_an_split(data:pd.DataFrame):
-        #round data
-        data["duration"] = data["duration"].apply(lambda x: round(x))
-        #acess 30s files
-        #split in 6 files a 5s with new name and safe dem 
-        #acess 10s files split in 5s file 1 2files and safe dem too
-        
-        
-        print(data.duration.unique())
- 
     cut_length_an_split(all_data)

@@ -1,5 +1,6 @@
 import pandas as pd
 from torch import nn, optim
+from sklearn.preprocessing import LabelEncoder
 from pre_processing import split_data, SoundDataSet,get_classes
 import torch.cuda as cuda
 from torch.utils.data import DataLoader
@@ -19,6 +20,12 @@ if __name__ == '__main__':
     
     
     #-----encode labels
+    # encoder = LabelEncoder() #das hier clt als funktion machen?
+    # label_encoded = encoder.fit_transform(all_data["label"])
+    # all_data["label"] = label_encoded
+    # all_data.to_csv("all_data.csv",index=False)
+    
+    # print(encoder.classes_)
     
     #splitt val train data
     X_train, X_test, X_val, y_train, y_test, y_val = split_data(all_data)
@@ -45,7 +52,7 @@ if __name__ == '__main__':
     
     
     #------train variables
-    epochs = 11
+    epochs = 6
     lr = 0.0001 #0.0001
     
     #------metrics
@@ -56,11 +63,10 @@ if __name__ == '__main__':
     #----------init Network
     network = CNN(hidden_layer_1=hidden_layer_1,hidden_layer_2=hidden_layer_2,num_classes=num_classes).to(device)
     #load a pretrained model
-    # network.load_state_dict(torch.load(r"Models\model_new_2s_epoch_20_acc_0.94.pkl"))
+    network.load_state_dict(torch.load(r"Models\test_new_length_5_acc_0.98.pkl"))
     #loss function
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(network.parameters(),lr)#mal den Adam etwas genauer und wissenschaftlier anscchauen
-    # optimizer = getattr(torch.optim,optimizer_choice)(network.parameters(),lr=lr)
+    optimizer = optim.Adam(network.parameters(),lr)
     
     #-------Loop
     for epoch in tqdm(range(epochs)):
@@ -81,6 +87,12 @@ if __name__ == '__main__':
     end_time = time.time()
     last_time = end_time - start_time
     print(f"The program took: {round(last_time/60,2)} min")
+    
+    
+    # #inverse encode labels again
+    # all_data["labels"] = label_encoder.inverse_transform(all_data["labels"])
+    # all_data.to_csv("all_data.csv",index=False)
+
     
     
     ###mal noch schauen mit dem label encider ob das probleme macht? also
